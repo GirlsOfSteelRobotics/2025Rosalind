@@ -11,11 +11,18 @@ public class Auto extends LinearOpMode {
         Chassis chassis = new Chassis(hardwareMap, telemetry);
         Shooter shooter = new Shooter(hardwareMap);
         waitForStart();
-if (opModeIsActive()) {
-    chassis.moveForward(3000, telemetry);
-    chassis.moveBackwards(3000, telemetry);
-    chassis.moveSideways(3000, telemetry);
-    chassis.turnOneWay(3000, telemetry);
+        if (opModeIsActive()) {
+            chassis.moveForward(1000, telemetry);
+            sleep(100);
+            chassis.moveBackwards(1000, telemetry);
+            sleep(100);
+            chassis.turnRight(1000, telemetry);
+            sleep(100);
+            chassis.turnLeft(1000, telemetry);
+            sleep(100);
+            chassis.sidewaysRight(1000, telemetry);
+            sleep(100);
+            chassis.sidewaysLeft(1000, telemetry);
         }
     }
 }

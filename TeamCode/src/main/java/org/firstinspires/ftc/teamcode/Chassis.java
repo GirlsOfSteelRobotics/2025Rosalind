@@ -35,12 +35,10 @@ public class Chassis {
         backRight = (DcMotorEx) hm.dcMotor.get("RB");
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-//        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         imu = hm.get(IMU.class, "imu");
         imu.initialize(myIMUparameters);
         limelight = hm.get(Limelight3A.class, "limelight");
@@ -135,8 +133,6 @@ public class Chassis {
         backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
         leftMotors.setIncreasedTargetPosition(numTicks);
         rightMotors.setIncreasedTargetPosition(numTicks);
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -152,24 +148,20 @@ public class Chassis {
             telem.addData("br", backRight.getCurrentPosition());
             telem.update();
         }
-
         // set motor power back to 0
         leftMotors.setPower(0);
         rightMotors.setPower(0);
-
     }
 
     public void moveBackwards(int numTicks, Telemetry telem) {
-        frontLeft.setTargetPositionTolerance(-200);
-        frontRight.setTargetPositionTolerance(-200);
-        backLeft.setTargetPositionTolerance(-200);
-        backRight.setTargetPositionTolerance(-200);
+        frontLeft.setTargetPositionTolerance(200);
+        frontRight.setTargetPositionTolerance(200);
+        backLeft.setTargetPositionTolerance(200);
+        backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
-        leftMotors.setIncreasedTargetPosition(numTicks);
-        rightMotors.setIncreasedTargetPosition(numTicks);
+        leftMotors.setDecreasedTargetPosition(numTicks);
+        rightMotors.setDecreasedTargetPosition(numTicks);
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setPower(1);
@@ -186,22 +178,18 @@ public class Chassis {
         leftMotors.setPower(0);
         rightMotors.setPower(0);
     }
-    public void moveSideways(int numTicks, Telemetry telem) {
-        frontLeft.setTargetPositionTolerance(-200);
+    public void sidewaysLeft(int numTicks, Telemetry telem) {
+        frontLeft.setTargetPositionTolerance(200);
         frontRight.setTargetPositionTolerance(200);
         backLeft.setTargetPositionTolerance(200);
-        backRight.setTargetPositionTolerance(-200);
+        backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
-        leftMotors.setIncreasedTargetPosition(numTicks);
         frontLeft.setTargetPosition(frontLeft.getCurrentPosition()-numTicks);
         backRight.setTargetPosition(backRight.getCurrentPosition()-numTicks);
         frontRight.setTargetPosition(frontRight.getCurrentPosition()+numTicks);
         backLeft.setTargetPosition(backLeft.getCurrentPosition()+numTicks);
 
-        rightMotors.setIncreasedTargetPosition(numTicks);
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontLeft.setPower(1);
@@ -220,17 +208,15 @@ public class Chassis {
         leftMotors.setPower(0);
         rightMotors.setPower(0);
     }
-    public void moveToOtherSide(int numTicks, Telemetry telem) {
+    public void turnRight(int numTicks, Telemetry telem) {
         frontLeft.setTargetPositionTolerance(200);
-        frontRight.setTargetPositionTolerance(-200);
-        backLeft.setTargetPositionTolerance(-200);
+        frontRight.setTargetPositionTolerance(200);
+        backLeft.setTargetPositionTolerance(200);
         backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
         leftMotors.setIncreasedTargetPosition(numTicks);
-        rightMotors.setIncreasedTargetPosition(numTicks);
+        rightMotors.setDecreasedTargetPosition(numTicks);
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontLeft.setPower(-1);
@@ -249,17 +235,18 @@ public class Chassis {
         leftMotors.setPower(0);
         rightMotors.setPower(0);
     }
-    public void turnOneWay(int numTicks, Telemetry telem) {
-        frontLeft.setTargetPositionTolerance(-200);
+    public void sidewaysRight(int numTicks, Telemetry telem) {
+        frontLeft.setTargetPositionTolerance(200);
         frontRight.setTargetPositionTolerance(200);
-        backLeft.setTargetPositionTolerance(-200);
+        backLeft.setTargetPositionTolerance(200);
         backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
-        leftMotors.setDecreasedTargetPosition(numTicks);
-        rightMotors.setIncreasedTargetPosition(numTicks);
+        frontLeft.setTargetPosition(frontLeft.getCurrentPosition()+numTicks);
+        backRight.setTargetPosition(backRight.getCurrentPosition()+numTicks);
+        frontRight.setTargetPosition(frontRight.getCurrentPosition()-numTicks);
+        backLeft.setTargetPosition(backLeft.getCurrentPosition()-numTicks);
+
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setPower(-1);
@@ -273,23 +260,19 @@ public class Chassis {
             telem.addData("br", backRight.getCurrentPosition());
             telem.update();
         }
-
         // set motor power back to 0
         leftMotors.setPower(0);
         rightMotors.setPower(0);
-
     }
-    public void turnTheOtherWay(int numTicks, Telemetry telem) {
+    public void turnLeft(int numTicks, Telemetry telem) {
         frontLeft.setTargetPositionTolerance(200);
-        frontRight.setTargetPositionTolerance(-200);
+        frontRight.setTargetPositionTolerance(200);
         backLeft.setTargetPositionTolerance(200);
-        backRight.setTargetPositionTolerance(-200);
+        backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        //x= input (inches)
-        //distanceTicks = (1120x)/12.566
-        leftMotors.setIncreasedTargetPosition(numTicks);
-        rightMotors.setDecreasedTargetPosition(numTicks);
+        leftMotors.setDecreasedTargetPosition(numTicks);
+        rightMotors.setIncreasedTargetPosition(numTicks);
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setPower(1);
@@ -307,7 +290,9 @@ public class Chassis {
         // set motor power back to 0
         leftMotors.setPower(0);
         rightMotors.setPower(0);
-
     }
 }
 
+
+// if tx too big, turn Right; if too small (neg), turn left
+// if ty too small, forwards; if too big, backwards
