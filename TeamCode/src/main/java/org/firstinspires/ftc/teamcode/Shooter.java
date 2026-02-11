@@ -24,6 +24,10 @@ public class Shooter {
         orangeWheels = hm.get(DcMotor.class, "feederWheel");
         intakeMain = hm.get(DcMotor.class, "IntakeFast");
         secondIntake = hm.get(DcMotor.class, "ballPusher");
+        shooterWheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        orangeWheels.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeMain.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        secondIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
     public void Shoot(boolean rightTrigger, boolean leftBumper, boolean a, Telemetry telemetry) {
         double shooterSpeed;
@@ -59,5 +63,21 @@ public class Shooter {
         }
         telemetry.addData("velocity", shooterSpeed);
         telemetry.addData("error", error);
+    }
+    public void shootEncoderBased(int numTicks, Telemetry telem){
+        MotorGroup intakes = new MotorGroup((DcMotorEx) intakeMain, (DcMotorEx) secondIntake);
+        int targetPos = 5000;
+        int currentError = shooterWheel.getCurrentPosition()-targetPos;
+        double intakesCurrentPower = intakeMain.getPower();
+        double shooterCurrentPower = shooterWheel.getPower();
+        if (currentError<targetPos){
+            shooterWheel.setPower(0.7);
+            if (shooterCurrentPower>=0.7) {
+                intakes.setPower(1);
+                if (intakesCurrentPower>=0.9){
+                    orangeWheels.setPower(1);
+                }
+            }
+        }
     }
 }

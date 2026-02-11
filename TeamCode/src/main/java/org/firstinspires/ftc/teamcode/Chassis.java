@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,12 +15,36 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import dev.nextftc.control.KineticState;
+import dev.nextftc.control.feedback.FeedbackType;
+import dev.nextftc.control.feedback.PIDCoefficients;
+import dev.nextftc.control.feedback.PIDElement;
+
+import java.util.List;
+
 public class Chassis {
     private final DcMotorEx frontLeft;
     private final DcMotorEx backLeft;
     private final DcMotorEx frontRight;
     private final DcMotorEx backRight;
-    private Limelight3A limelight;
+    private final Limelight3A limelight;
+
+    int lastLength = 0;
+    double axial = 0.0;
+    double lateral = 0.0;
+    double yaw = 0.0;
+
+    public static double axialOffset = 1.0;
+    public static double lateralOffset = 0.2;
+    public static double yawOffset = 0.0;
+
+    private PIDElement yawPID;
+    private PIDElement axialPID;
+    private PIDElement lateralPID;
+
+    public static PIDCoefficients yawPIDCoefficients = new PIDCoefficients(0.05,0.0,0.0);
+    public static PIDCoefficients axialPIDCoefficients = new PIDCoefficients(0.9,0.0,0.0005);
+    public static PIDCoefficients lateralPIDCoefficients = new PIDCoefficients(-0.3,0.0,0.00001);
 
     IMU.Parameters myIMUparameters = new IMU.Parameters(
             new RevHubOrientationOnRobot(
@@ -27,8 +52,14 @@ public class Chassis {
                     RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
             ));
     private final IMU imu;
+    private int tx;
+
+    private int ty;
 
     public Chassis(HardwareMap hm, Telemetry telemetry) {
+        yawPID = new PIDElement(FeedbackType.POSITION, yawPIDCoefficients);
+        axialPID = new PIDElement(FeedbackType.POSITION, axialPIDCoefficients);
+        lateralPID = new PIDElement(FeedbackType.POSITION, lateralPIDCoefficients);
         frontLeft = (DcMotorEx) hm.dcMotor.get("LF");
         backLeft = (DcMotorEx) hm.dcMotor.get("LB");
         frontRight = (DcMotorEx) hm.dcMotor.get("RF");
@@ -54,12 +85,46 @@ public class Chassis {
         if (result != null) {
             if (result.isValid()) {
                 Pose3D botpose = result.getBotpose_MT2();
+                telemetry.addData("botpose.pitch", botpose.getOrientation().getPitch());
+                telemetry.addData("botpose.roll", botpose.getOrientation().getRoll());
+                telemetry.addData("botpose.yaw", botpose.getOrientation().getYaw());
                 telemetry.addData("tx", result.getTx());
                 telemetry.addData("ty", result.getTy());
                 telemetry.addData("ta", result.getTa());
                 telemetry.addData("Botpose", botpose.toString());
             }
         }
+
+        List<LLResultTypes.FiducialResult> fiducialResults = limelight.getLatestResult().getFiducialResults();
+
+        if (!fiducialResults.isEmpty()) {
+            LLResultTypes.FiducialResult snapshot = fiducialResults.get(0);
+
+            //if (lastLength != fiducialResults.size()) {
+            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+            axial = -axialOffset - snapshot.getRobotPoseTargetSpace().getPosition().z; // Note: pushing stick forward gives negative value
+            lateral = -lateralOffset + snapshot.getRobotPoseTargetSpace().getPosition().x;
+            yaw = -yawOffset + snapshot.getRobotPoseTargetSpace().getOrientation().getYaw();
+            telemetry.addData("Axial error:", -axialOffset - snapshot.getRobotPoseTargetSpace().getPosition().z);
+            telemetry.addData("Lateral error:", -lateralOffset + snapshot.getRobotPoseTargetSpace().getPosition().x);
+            telemetry.addData("Yaw error:", -yawOffset + snapshot.getRobotPoseTargetSpace().getOrientation().getYaw());
+//            telemetry.addData("Axial output:", axial);
+//            telemetry.addData("Lateral output:", lateral);
+//            telemetry.addData("Yaw output:", yaw);
+            telemetry.addData("Axial:", -snapshot.getRobotPoseTargetSpace().getPosition().z);
+            telemetry.addData("Lateral:", snapshot.getRobotPoseTargetSpace().getPosition().x);
+            telemetry.addData("Yaw:", snapshot.getRobotPoseTargetSpace().getOrientation().getYaw());
+        }
+//        if (tx>11){
+//            turnRight(500, telemetry);
+//        }else if(tx<11){
+//            turnLeft(500, telemetry);
+//        }ami
+//        if(ty<0){
+//            moveForward(500, telemetry);
+//        }else if(ty>0){
+//            moveBackwards(500, telemetry);
+//        }
     }
 
     public void drive(double x, double y, double rx) {
@@ -93,39 +158,6 @@ public class Chassis {
     public void resetIMU() {
         imu.resetYaw();
     }
-
-    public void moveForwardBad(int numTicks, Telemetry telem) {
-        frontRight.setTargetPosition(frontRight.getCurrentPosition() + numTicks);
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + numTicks);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition() + numTicks);
-        backRight.setTargetPosition(backRight.getCurrentPosition() + numTicks);
-
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontLeft.setPower(.2);
-        frontRight.setPower(.2);
-        backLeft.setPower(.2);
-        backRight.setPower(.2);
-
-        while (frontRight.isBusy() || frontLeft.isBusy() || backRight.isBusy() || backLeft.isBusy()) {
-            telem.addData("isbusy", true);
-            telem.addData("fl", frontLeft.getCurrentPosition());
-            telem.addData("fr", frontRight.getCurrentPosition());
-            telem.addData("bl", backLeft.getCurrentPosition());
-            telem.addData("br", backRight.getCurrentPosition());
-            telem.update();
-        }
-
-        // set motor power back to 0
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-
-    }
-
     public void moveForward(int numTicks, Telemetry telem) {
         frontLeft.setTargetPositionTolerance(200);
         frontRight.setTargetPositionTolerance(200);
@@ -185,10 +217,10 @@ public class Chassis {
         backRight.setTargetPositionTolerance(200);
         MotorGroup leftMotors = new MotorGroup(frontLeft, backLeft);
         MotorGroup rightMotors = new MotorGroup(frontRight, backRight);
-        frontLeft.setTargetPosition(frontLeft.getCurrentPosition()-numTicks);
-        backRight.setTargetPosition(backRight.getCurrentPosition()-numTicks);
-        frontRight.setTargetPosition(frontRight.getCurrentPosition()+numTicks);
-        backLeft.setTargetPosition(backLeft.getCurrentPosition()+numTicks);
+        frontLeft.setTargetPosition(frontLeft.getCurrentPosition() - numTicks);
+        backRight.setTargetPosition(backRight.getCurrentPosition() - numTicks);
+        frontRight.setTargetPosition(frontRight.getCurrentPosition() + numTicks);
+        backLeft.setTargetPosition(backLeft.getCurrentPosition() + numTicks);
 
         leftMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightMotors.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -290,6 +322,54 @@ public class Chassis {
         // set motor power back to 0
         leftMotors.setPower(0);
         rightMotors.setPower(0);
+    }
+    public void aprilTagDrive(Telemetry telemetry) {
+        List<LLResultTypes.FiducialResult> fiducialResults = limelight.getLatestResult().getFiducialResults();
+
+        if (!fiducialResults.isEmpty()) {
+            LLResultTypes.FiducialResult snapshot = fiducialResults.get(0);
+
+            //if (lastLength != fiducialResults.size()) {
+            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+            axial = axialPID.calculate(new KineticState(-axialOffset - snapshot.getRobotPoseTargetSpace().getPosition().z)); // Note: pushing stick forward gives negative value
+            lateral = lateralPID.calculate(new KineticState(-lateralOffset + snapshot.getRobotPoseTargetSpace().getPosition().x));
+            yaw = yawPID.calculate(new KineticState(-yawOffset + snapshot.getRobotPoseTargetSpace().getOrientation().getYaw() -1.5));
+            /*
+            } else {
+                axial = 0.0;
+                lateral = 0.0;
+                yaw = 0.0;
+            }
+
+             */
+            // Combine the joystick requests for each axis-motion to determine each wheel's power.
+            // Set up a variable for each drive wheel to save the power level for telemetry.
+            double leftFrontPower = axial + lateral + yaw;
+            double rightFrontPower = axial - lateral - yaw;
+            double leftBackPower = axial - lateral + yaw;
+            double rightBackPower = axial + lateral - yaw;
+
+            // Normalize the values so no wheel power exceeds 100%
+            // This ensures that the robot maintains the desired motion.
+
+
+            // Send calculated power to wheels
+            frontLeft.setPower(leftFrontPower);
+            frontRight.setPower(rightFrontPower);
+            backLeft.setPower(leftBackPower);
+            backRight.setPower(rightBackPower);
+
+            telemetry.addData("Axial error:", -axialOffset - snapshot.getRobotPoseTargetSpace().getPosition().z);
+            telemetry.addData("Lateral error:", -lateralOffset + snapshot.getRobotPoseTargetSpace().getPosition().x);
+            telemetry.addData("Yaw error:", -yawOffset + snapshot.getRobotPoseTargetSpace().getOrientation().getYaw() - 1.5);
+            telemetry.addData("Axial output:", axial);
+            telemetry.addData("Lateral output:", lateral);
+            telemetry.addData("Yaw output:", yaw);
+            telemetry.addData("Axial:", -snapshot.getRobotPoseTargetSpace().getPosition().z);
+            telemetry.addData("Lateral:", snapshot.getRobotPoseTargetSpace().getPosition().x);
+            telemetry.addData("Yaw:", snapshot.getRobotPoseTargetSpace().getOrientation().getYaw());
+        }
+        lastLength = fiducialResults.size();
     }
 }
 

@@ -12,7 +12,7 @@ public class AutoBad extends LinearOpMode {
         Shooter shooter = new Shooter(hardwareMap);
         waitForStart();
 if (opModeIsActive()) {
-    chassis.moveForwardBad(3000, telemetry);
+    chassis.moveForward(3000, telemetry);
         }
     }
 }

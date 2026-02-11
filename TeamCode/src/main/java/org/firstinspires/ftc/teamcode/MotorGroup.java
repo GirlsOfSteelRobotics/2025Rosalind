@@ -33,4 +33,7 @@ public class MotorGroup{
     public boolean isBusy (){
         return front.isBusy() || back.isBusy();
     }
+
+    public void setPower(int power) {
+    }
 }
