@@ -35,5 +35,7 @@ public class MotorGroup{
     }
 
     public void setPower(int power) {
+        front.setPower(power);
+        back.setPower(power);
     }
 }

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -18,20 +19,15 @@ public class Auto extends LinearOpMode {
         Shooter shooter = new Shooter(hardwareMap);
         waitForStart();
         if (opModeIsActive()) {
-            chassis.moveForward(1000, telemetry);
-            sleep(100);
-            chassis.moveBackwards(1000, telemetry);
-            sleep(100);
-            chassis.turnRight(1000, telemetry);
-            sleep(100);
-            chassis.turnLeft(1000, telemetry);
-            sleep(100);
-            chassis.sidewaysRight(1000, telemetry);
-            sleep(100);
-            chassis.sidewaysLeft(1000, telemetry);
 
-            chassis.moveBackwards(2000, telemetry);
+            chassis.moveBackwards(1500, telemetry);
+            //limelight adjust
             shooter.shootEncoderBased(7000, telemetry);
+            chassis.turnLeft(500, telemetry);
+            shooter.intakeStart();
+            chassis.moveBackwards(2000, telemetry);
+            shooter.intakeStop();
+
         }
     }
 }
